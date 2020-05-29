@@ -1,0 +1,18 @@
+cluster.name: {{ elasticsearch.cluster_name }}
+node.name: "{{ inventory_hostname }}"
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+http.port: {{ elasticsearch.http_port }}
+transport.tcp.port: {{ elasticsearch.transport_tcp_port }}
+network.host: {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+discovery.seed_hosts: [{% for node in groups['elastic'] -%}"{{ hostvars[node]['ansible_default_ipv4']['address'] }}"{% if not loop.last %},{% endif %}{% endfor %}]
+cluster.initial_master_nodes: [{% for node in groups['elastic'] %}"{{ node }}" {% if not loop.last %},{% endif %}{%endfor%}]
+node.master: true
+node.data: true
+discovery.zen.minimum_master_nodes: 2
+xpack.security.enabled: true
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.verification_mode: certificate
+xpack.security.transport.ssl.keystore.path: elastic-certificates.p12
+xpack.security.transport.ssl.truststore.path: elastic-certificates.p12
+xpack.security.authc.realms.file.file1.order: 0

@@ -1,0 +1,125 @@
+---
+- name: For Debian based system
+  block:
+  - name: Download elasticsearch .deb package
+    get_url:
+      url: "{{elasticsearch.url}}/elasticsearch-{{elasticsearch.version}}-amd64.deb"
+      dest: "{{elasticsearch.download_folder}}"
+  - name: Install a .deb package
+    apt:
+      deb: "{{elasticsearch.download_folder}}/elasticsearch-{{elasticsearch.version}}-amd64.deb"
+  when: ansible_os_family == 'Debian'
+
+- name: For RedHat based system
+  block:
+  - name: Download elasticsearch .rpm package
+    get_url:
+      url: "{{elasticsearch.url}}/elasticsearch-{{elasticsearch.version}}-x86_64.rpm"
+      dest: "{{elasticsearch.download_folder}}"
+  - name: Install a .rpm package
+    yum: 
+      name: "{{elasticsearch.download_folder}}/elasticsearch-{{elasticsearch.version}}-x86_64.rpm"
+  when: ansible_os_family == 'RedHat'
+
+- name: Template elasticsearch.yml and jvm.option
+  template:
+    src: "{{item.src}}"
+    dest: "{{elasticsearch.path_etc}}/{{item.dest}}"
+  with_items:
+  - { src: 'jvm.options.j2', dest: 'jvm.option' }
+  - { src: 'elasticsearch.yml.j2', dest: 'elasticsearch.yml' }
+
+- name: Check a certificate of authority
+  stat:
+    path: "{{elasticsearch.path_home}}/elastic-stack-ca.p12"
+  register: elastic_stack_ca_file
+
+- name: Generate a certificate of authority
+  run_once: true
+  shell: |
+    '{{elasticsearch.path_home}}'/bin/elasticsearch-certutil ca --out elastic-stack-ca.p12 --pass ""
+  when: not elastic_stack_ca_file.stat.exists
+
+- name: Check a certificate of authority
+  stat:
+    path: "{{elasticsearch.path_home}}/elastic-stack-ca.p12"
+  register: elastic_stack_ca_file
+
+- name: Copy file elastic-stack-ca.p12 to local host
+  fetch:
+    src: "{{elasticsearch.path_home}}/elastic-stack-ca.p12"
+    dest: roles/elasticsearch-cluster/files/
+    flat: yes
+  when: elastic_stack_ca_file.stat.exists
+
+- name: Copy file with owner and permissions
+  copy:
+    src: elastic-stack-ca.p12
+    dest: "{{elasticsearch.path_home}}"
+    owner: root
+    group: root
+    mode: '0600'
+  when: not elastic_stack_ca_file.stat.exists
+
+- name: Check a certificate of authority
+  stat:
+    path: "{{elasticsearch.path_home}}/elastic-stack-ca.p12"
+  register: elastic_stack_ca_file
+
+- name: Check a certificate and private key for a node
+  stat:
+    path: "{{elasticsearch.path_etc}}/elastic-certificates.p12"
+  register: elastic_certificates_file
+
+- name: Generate a certificate and private key for a node
+  shell: |
+    '{{elasticsearch.path_home}}'/bin/elasticsearch-certutil cert \
+    --ca elastic-stack-ca.p12 --ca-pass "" \
+    --out '{{elasticsearch.path_etc}}'/elastic-certificates.p12 --pass ""
+  when: elastic_stack_ca_file.stat.exists and not elastic_certificates_file.stat.exists
+
+- name: Check a certificate and private key for a node
+  stat:
+    path: "{{elasticsearch.path_etc}}/elastic-certificates.p12"
+  register: elastic_certificates_file
+
+- name: Change elastic-certificates.p12 ownership, group and permissions
+  file:
+    path: "{{elasticsearch.path_etc}}/elastic-certificates.p12"
+    owner: root
+    group: "{{elasticsearch.group}}"
+    mode: '0660'
+  when: elastic_certificates_file.stat.exists   
+
+- name: Start elasticsearch service
+  systemd:
+    name: elasticsearch.service
+    enabled: yes
+    state: started
+
+- name: Create user and pass
+  shell: |
+    '{{elasticsearch.path_home}}'/bin/elasticsearch-users useradd '{{user_access}}' \
+    -p '{{pass_access}}' -r superuser
+  register: create_user_result
+  ignore_errors: yes
+
+- debug:
+    var: create_user_result.stderr_lines
+  when: create_user_result is failed
+
+- name: Check elasticsearch cluster health
+  uri:
+    url: http://{{hostvars[inventory_hostname].ansible_ssh_host}}:{{elasticsearch.http_port}}/_cluster/health?pretty
+    user: "{{user_access}}"
+    password: "{{pass_access}}"
+    method: GET
+    return_content: yes
+  register: json_response
+
+- debug:
+    msg: "{{json_response}}"
+
+- fail:
+    msg: "{{json_response}}"    
+  when: json_response["json"]["status"] != "green"

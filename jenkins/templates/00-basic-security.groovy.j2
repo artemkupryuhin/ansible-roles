@@ -1,0 +1,16 @@
+import hudson.security.*
+import jenkins.model.*
+import hudson.util.*
+import jenkins.install.*
+
+def instance = Jenkins.getInstance()
+
+def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+
+hudsonRealm.createAccount("{{ jenkins.user }}","{{ jenkins.pass }}")
+instance.setSecurityRealm(hudsonRealm)
+
+// Disable Setup Wizard
+instance.setInstallState(InstallState.INITIAL_SETUP_COMPLETED)
+
+instance.save()

@@ -1,0 +1,14 @@
+---
+kafka_download_url: https://archive.apache.org/dist/
+kafka_version: 2.4.0
+kafka_version_scala: 2.12
+kafka_java_version: 8
+kafka_zookeeper_dataDir: /opt/kafka/zookeeper_data
+kafka_home_dir: /opt/kafka
+kafka_data_dir: /opt/kafka/data
+kafka_log_retention_hours: 168
+kafka_cluster_group_hosts: kafka_nodes
+kafka_cluster: true
+kafka_zookeeper_cluster: true
+kafka_service_environment_overrides:
+  KAFKA_HEAP_OPTS: "-Xmx{{ (ansible_memtotal_mb * 0.8/1024)|int }}g"

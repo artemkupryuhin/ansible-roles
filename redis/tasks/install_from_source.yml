@@ -1,0 +1,82 @@
+---
+- name: Install apt packages
+  apt: 
+    pkg: 
+      - build-essential
+      - tcl
+  when: ansible_os_family == 'Debian'
+
+- name: Install yum packages
+  yum: 
+    name:
+      - gcc
+      - make
+  when: ansible_os_family == 'RedHat'
+
+- name: Create Redis Group
+  group:
+    name: "{{redis.group}}"
+
+- name: Create Redis User
+  user:
+    name: "{{redis.user}}"
+    comment: "Redis User"
+    system: yes
+    group: "{{redis.group}}"
+ 
+- name: Download redis source file
+  get_url:
+    url: "{{redis.url}}/redis-{{redis.version}}.tar.gz"
+    dest: "{{redis.download_folder}}"
+    timeout: 20
+
+- name : Unzip redis tar file
+  unarchive:
+    src:  "{{redis.download_folder}}/redis-{{redis.version}}.tar.gz"
+    dest: "{{redis.download_folder}}"
+    remote_src: yes
+
+- name: Run 'make install'
+  shell: make PREFIX=/usr install
+  args:
+    chdir: "{{redis.download_folder}}/redis-{{redis.version}}"
+       
+- name: Create /etc/redis
+  file:
+    path: /etc/redis
+    state: directory
+    owner: "{{redis.user}}"
+    group: "{{redis.group}}"
+    mode: 0770
+    follow: true
+
+- name: Create redis working directory
+  file:
+    path: "{{redis.work_dir}}"
+    state: directory
+    owner: "{{redis.user}}"
+    group: "{{redis.group}}"
+    mode: 0760
+    follow: true
+  
+- name: Template redis.conf to /etc/redis/
+  template:
+    src: redis.conf.j2
+    dest: /etc/redis/redis.conf
+    owner: "{{redis.user}}"
+    group: "{{redis.group}}"
+    mode: 0400
+ 
+- name: Template redis.service to /etc/systemd/system/
+  template:
+    src: redis.service.j2
+    dest: /etc/systemd/system/redis.service
+    owner: "{{redis.user}}"
+    group: "{{redis.group}}"
+    mode: 0770
+   
+- name: Start redis service
+  systemd:
+    name: redis.service
+    enabled: yes
+    state: started

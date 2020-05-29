@@ -1,0 +1,11 @@
+- name: Install OpenJDK for Debian based system
+  apt:
+    name: "{{debian_java_package_name}}"
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Install OpenJDK for RedHat based system
+  yum:
+    name: "{{redhat_java_package_name}}"
+    state: present
+  when: ansible_os_family == 'RedHat'

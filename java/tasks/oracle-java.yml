@@ -1,0 +1,37 @@
+---
+- name: Install Oracle Java
+  block:   
+    - block:
+        - name: Add ppa repository from Linux Uprising team provides
+          apt_repository:
+            repo: ppa:linuxuprising/java
+        - name: Wizardry to bypass the Oracle License File prompt
+          shell: echo debconf shared/accepted-oracle-license-v1-2 select true | debconf-set-selections
+        - name: Install Oracle Java
+          apt:
+            name: oracle-java{{ oracle_java_version }}-set-default
+      when: oracle_java_version == 13 or oracle_java_version == 14
+
+    - name: Fetch Java version
+      shell: java -version
+      register: java_result
+      ignore_errors: yes
+
+    - debug:
+        msg: "Failed - Java is not installed"
+      when: java_result is failed
+
+    - debug:
+        msg: "Success - Java is installed"
+      when: java_result is success
+
+  when: ansible_os_family == 'Debian'
+
+- name: GET JAVA_HOME
+  command: "jrunscript --help -e 'java.lang.System.out.println(java.lang.System.getProperty(\"java.home\"));'"
+  register: jrunscript
+
+- name: SET JAVA_HOME
+  lineinfile:
+    path: /etc/environment
+    line: "JAVA_HOME={{ jrunscript.stdout }}"

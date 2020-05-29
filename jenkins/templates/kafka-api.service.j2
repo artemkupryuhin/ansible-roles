@@ -1,0 +1,10 @@
+[Unit]
+Description=Kafka-API service
+Documentation=https://gitlab.com/slower-west/kafka-selfservice/api.git
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/kafka-api -conf /tmp/config.yml
+
+[Install]
+WantedBy=multi-user.target
