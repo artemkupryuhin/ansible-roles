@@ -1,0 +1,19 @@
+---
+ - name: JsonQuery Playbook
+   hosts: localhost
+   tasks:
+     - name: Download JSON content play
+       uri:
+         url: https://jsonplaceholder.typicode.com/users
+         return_content: yes
+       register: jsoncontent
+
+     - name: Collecting UserName and Mobile Number info
+       no_log: True
+       set_fact:
+         phonebook: "{{phonebook|default({}) | combine ( {item.name : item.phone}) }}"
+       with_items: "{{ jsoncontent.json | json_query('[*]')}}"
+
+     - name: The Phonebook
+       debug: var=phonebook
+       

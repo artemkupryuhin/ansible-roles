@@ -1,0 +1,15 @@
+---
+ - name: JsonQuery Playbook
+   hosts: localhost
+   tasks:
+     - name: Download JSON content play
+       uri:
+         url: https://jsonplaceholder.typicode.com/users
+         return_content: yes
+       register: jsoncontent
+
+
+     - name: Business Card
+       debug: msg="{{ jsoncontent.json | json_query(jmesquery) }}"
+       vars:
+         jmesquery: "[*].{Name: name, Email: email, Phone: phone, CompanyName: company.name, WebSite: website, City: address.city}"
