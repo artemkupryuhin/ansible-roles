@@ -1,0 +1,5 @@
+namespace: my_namespace
+name: my_collection
+readme: README.md
+authors:
+- your name <example@domain.com>

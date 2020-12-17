@@ -1,0 +1,25 @@
+---
+- block:
+  - name: Install redis-server via apt
+    apt: 
+      name: redis-server
+  - name: Enable redis-server.service on startup
+    systemd:
+      name: redis-server.service
+      enabled: yes
+      state: started        
+  when: ansible_os_family == 'Debian'
+  
+- block:
+  - name: Install redis via yum
+    yum:
+      name: 
+        - epel-release
+        - redis
+      state: present
+  - name: Enable redis.service on startup
+    systemd:
+      name: redis.service
+      enabled: yes
+      state: started
+  when: ansible_os_family == 'RedHat'  

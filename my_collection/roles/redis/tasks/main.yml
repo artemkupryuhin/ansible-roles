@@ -1,0 +1,35 @@
+---
+- name: Update Debian based system
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+  when: ansible_os_family == 'Debian'
+
+- name: Update RedHat based system
+  yum:
+    update_cache: yes
+  when: ansible_os_family == 'RedHat'
+
+- name: Install redis server from default repository
+  include_tasks: install_from_repo.yml
+  when: redis.install_from_repo|bool == true
+
+- name: Install redis server from source
+  include_tasks: install_from_source.yml
+  when: redis.install_from_repo|bool == false
+
+- name: Check redis server version
+  shell: redis-cli info | grep redis_version
+  register: shell_result_info
+
+- name: "Output command: redis-cli info | grep redis_version"
+  debug: 
+    var: shell_result_info.stdout_lines
+
+- name: Check redis server installed
+  shell: redis-cli ping
+  register: shell_result_ping
+
+- name: "Output command: redis-cli ping"
+  debug: 
+    var: shell_result_ping.stdout_lines

@@ -1,0 +1,6 @@
+---
+oracle_java_version: 14  # Support oracle java versions: 13,14
+
+install_openjdk: yes #yes - install openjdk version, no - install oracle version
+redhat_java_package_name: java-1.8.0-openjdk
+debian_java_package_name: openjdk-8-jdk

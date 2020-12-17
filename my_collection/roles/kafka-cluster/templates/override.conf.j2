@@ -1,0 +1,3 @@
+{% for key, value in kafka_service_environment_overrides.items() %}
+Environment="{{key}}={{value}}"
+{% endfor %}
