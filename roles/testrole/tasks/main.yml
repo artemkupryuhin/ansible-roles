@@ -1,0 +1,5 @@
+---
+
+- name: debug task
+  debug:
+    msg: "I am from role from collection"
