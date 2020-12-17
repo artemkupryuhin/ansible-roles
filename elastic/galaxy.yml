@@ -1,6 +1,6 @@
-namespace: collection1
-name: test1
-version: 2.0.0
+namespace: elastic
+name: install
+version: 1.0.0
 readme: README.md
 authors:
 - your name <example@domain.com>
