@@ -4,3 +4,5 @@ version: 1.0.0
 readme: README.md
 authors:
 - your name <example@domain.com>
+description: "Roles for ECE"
+repository: https://github.com/artemkupryuhin/ansible-roles
