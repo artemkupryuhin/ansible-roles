@@ -1,5 +1,5 @@
-namespace: elastic
-name: install
+namespace: platform_services_glb
+name: obs
 version: 1.0.0
 readme: README.md
 authors:
